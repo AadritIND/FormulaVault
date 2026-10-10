@@ -130,7 +130,7 @@
   /* ---------- mobile / touch ---------- */
   body{ -webkit-tap-highlight-color: transparent; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; overscroll-behavior-x: none; }
   button, input, textarea, select, a, [role="button"]{ -webkit-tap-highlight-color: transparent; }
-  button, [role="button"], .chip, .seg button, .calc-tab, .card-outer{ touch-action: manipulation; }
+  button, [role="button"], .chip, .seg button, .card-outer{ touch-action: manipulation; }
   @supports (height: 100dvh){
     body{ min-height: 100dvh; }
   }

@@ -50,7 +50,6 @@ function confetti(n){
 /* ============ scroll reveal ============ */
 const io = ('IntersectionObserver' in window) ? new IntersectionObserver(function(es){ es.forEach(en=>{ if(en.isIntersecting){ en.target.classList.add('fv-in'); io.unobserve(en.target); } }); }, {rootMargin:'0px 0px -6% 0px', threshold:0.05}) : null;
 function reveal(){
-  if(window.__FV_LITE){ $$('#grid > *').forEach(function(el){ el.classList.add('fv-reveal','fv-in'); }); return; }
   $$('#grid > *').forEach(function(el,i){
     if(!el.classList.contains('fv-reveal')){
       el.classList.add('fv-reveal');

@@ -98,6 +98,13 @@
     });
   });
 
+  /* ---------- O(1) lookup by identity (avoids O(n^2) findIndex in renders) ---------- */
+  function cardKey(c){ return c.cls+'|'+c.subject+'|'+c.chapter+'|'+c.t; }
+  function buildIndex(list){ const m=new Map(); for(let i=0;i<list.length;i++) m.set(cardKey(list[i]), i); return m; }
+  const CIDX = buildIndex(CARDS);
+  const DIDX = buildIndex(DCARDS);
+  const LIDX = buildIndex(LCARDS);
+
   /* ============ typo-tolerant universal search ("AI search") ============ */
   /*
     Searches the ENTIRE vault (formulas + derivations + laws, all classes &
@@ -200,9 +207,9 @@
         low: tokens(c.search).map(_mk)
       };
     }
-    function scoreCard(qt,c){
+    function mkQ(tt){ return { w:tt, st:stem(tt), m:maskOf(tt), sm:maskOf(stem(tt)) }; }
+    function scoreCard(qq,c){
       const p=pools(c);
-      const qq = qt.map(function(tt){ return { w:tt, st:stem(tt), m:maskOf(tt), sm:maskOf(stem(tt)) }; });
       let total=0, matched=0, bestAny=0, fuzzy=false;
       for(const qx of qq){
         let best=-1, bf=false, w=0;
@@ -214,14 +221,16 @@
         total += best * w;
         matched++; if(bf) fuzzy=true;
       }
+      const nq = qq.length;
       if(!matched) return null;
-      const minCov = qt.length===1 ? 1 : Math.ceil(qt.length*0.5);
+      const minCov = nq===1 ? 1 : Math.ceil(nq*0.5);
       if(matched < minCov || bestAny < 0.7) return null;
-      return { score: total + (matched>=qt.length?0.15:0), coverage: matched/qt.length, fuzzy:fuzzy };
+      return { score: total + (matched>=nq?0.15:0), coverage: matched/nq, fuzzy:fuzzy };
     }
     function run(list, qt){
       const out=[];
-      for(const c of list){ const r=scoreCard(qt,c); if(r) out.push({card:c, score:r.score, coverage:r.coverage, fuzzy:r.fuzzy}); }
+      const qq = qt.map(mkQ);
+      for(const c of list){ const r=scoreCard(qq,c); if(r) out.push({card:c, score:r.score, coverage:r.coverage, fuzzy:r.fuzzy}); }
       out.sort(function(a,b){ return (b.coverage-a.coverage) || (b.score-a.score); });
       return out;
     }
@@ -234,7 +243,17 @@
       return { formulas:formulas, derivations:derivations, laws:laws,
                fuzzy: formulas.some(m=>m.fuzzy)||derivations.some(m=>m.fuzzy)||laws.some(m=>m.fuzzy), tokens:qt };
     }
-    return { search:search, tokens:tokens, STOP:STOP };
+    /* pre-tokenise every card during idle time so the first real search is instant */
+    function warm(){
+      const all=CARDS.concat(DCARDS,LCARDS); let i=0;
+      const idle = window.requestIdleCallback || function(f){ setTimeout(f,1); };
+      (function step(){
+        const end=Math.min(i+150, all.length);
+        for(; i<end; i++){ try{ pools(all[i]); }catch(e){} }
+        if(i<all.length) idle(step);
+      })();
+    }
+    return { search:search, tokens:tokens, STOP:STOP, warm:warm };
   })();
 
   /* ---------- state ---------- */
@@ -337,12 +356,13 @@
     const tipHTML = c.tip ? '<div class="tip-box"><b>Tip — </b>'+c.tip+'</div>' : '';
     const backDetail = (symHTML + constsHTML + casesHTML + tipHTML) ||
       '<div class="tip-box" style="margin-top:6px">No extra notes on this card — flip back to review the equation.</div>';
+    const isFav = !!(window.__fvIsFav && window.__fvIsFav(c));
     return (
       '<div class="card-outer" data-idx="'+idx+'" tabindex="0" role="button" aria-label="'+c.t+', tap to flip">'+
         '<div class="card-inner">'+
           '<div class="face face-front" style="--accent-c:'+accent+'">'+
             '<div class="card-actions">'+
-              '<button class="card-btn fv-fav'+(window.__fvIsFav&&window.__fvIsFav(c)?' active':'')+'" data-fav="'+idx+'" title="Bookmark" aria-label="Bookmark formula">'+(window.__fvIsFav&&window.__fvIsFav(c)?window.__I.starFilled:window.__I.star)+'</button>'+
+              '<button class="card-btn fv-fav'+(isFav?' active':'')+'" data-fav="'+idx+'" title="Bookmark" aria-label="Bookmark formula">'+(isFav?window.__I.starFilled:window.__I.star)+'</button>'+
               '<button class="card-btn fv-explain" data-explain="'+idx+'" title="Explain with AI" aria-label="Explain with AI">'+window.__I.sparkles+'</button>'+
             '</div>'+
             tag +
@@ -443,7 +463,8 @@
       chaptersData.forEach(ch=>{
         html += '<div class="chapter-heading"><h2>'+ch.chapter+'</h2><span>'+ch.formulas.length+' formulas</span></div>';
         ch.formulas.forEach(f=>{
-          const idx = CARDS.findIndex(c=>c.cls===ch.cls && c.subject===ch.subject && c.chapter===ch.chapter && c.t===f.t);
+          const idx = CIDX.get(ch.cls+'|'+ch.subject+'|'+ch.chapter+'|'+f.t);
+          if(idx===undefined) return;
           html += cardHTML(CARDS[idx], idx, false);
           count++;
         });
@@ -501,15 +522,15 @@
       }
       if(cf.list.length){
         html += '<div class="chapter-heading"><h2>Formulas</h2><span>'+(cf.total>cf.list.length ? cf.list.length+' of '+cf.total+' · top matches' : cf.total+' found')+'</span></div>';
-        cf.list.forEach((m)=>{ html += cardHTML(m.card, CARDS.indexOf(m.card), true, hl); });
+        cf.list.forEach((m)=>{ html += cardHTML(m.card, CIDX.get(cardKey(m.card)), true, hl); });
       }
       if(cd.list.length){
         html += '<div class="chapter-heading"><h2>Derivations</h2><span>'+(cd.total>cd.list.length ? cd.list.length+' of '+cd.total+' · top matches' : cd.total+' found')+'</span></div>';
-        cd.list.forEach((m)=>{ html += derivCardHTML(m.card, DCARDS.indexOf(m.card), hl); });
+        cd.list.forEach((m)=>{ html += derivCardHTML(m.card, DIDX.get(cardKey(m.card)), hl); });
       }
       if(cl.list.length){
         html += '<div class="chapter-heading"><h2>Laws</h2><span>'+(cl.total>cl.list.length ? cl.list.length+' of '+cl.total+' · top matches' : cl.total+' found')+'</span></div>';
-        cl.list.forEach((m)=>{ html += lawCardHTML(m.card, LCARDS.indexOf(m.card), hl); });
+        cl.list.forEach((m)=>{ html += lawCardHTML(m.card, LIDX.get(cardKey(m.card)), hl); });
       }
     }
     controlsWrap.style.opacity = '0.4';
@@ -530,7 +551,8 @@
       chaptersData.forEach(ch=>{
         html += '<div class="chapter-heading"><h2>'+ch.chapter+'</h2><span>'+ch.laws.length+' law'+(ch.laws.length===1?'':'s')+'</span></div>';
         ch.laws.forEach(l=>{
-          const idx = LCARDS.findIndex(c=>c.cls===ch.cls && c.subject===ch.subject && c.chapter===ch.chapter && c.t===l.t);
+          const idx = LIDX.get(ch.cls+'|'+ch.subject+'|'+ch.chapter+'|'+l.t);
+          if(idx===undefined) return;
           html += lawCardHTML(LCARDS[idx], idx);
           count++;
         });
@@ -554,7 +576,8 @@
       chaptersData.forEach(ch=>{
         html += '<div class="chapter-heading"><h2>'+ch.chapter+'</h2><span>'+ch.derivations.length+' derivation'+(ch.derivations.length===1?'':'s')+'</span></div>';
         ch.derivations.forEach(d=>{
-          const idx = DCARDS.findIndex(c=>c.cls===ch.cls && c.subject===ch.subject && c.chapter===ch.chapter && c.t===d.t);
+          const idx = DIDX.get(ch.cls+'|'+ch.subject+'|'+ch.chapter+'|'+d.t);
+          if(idx===undefined) return;
           html += derivCardHTML(DCARDS[idx], idx);
           count++;
         });
@@ -675,7 +698,7 @@
       renderCards();
       return;
     }
-    _searchTimer = setTimeout(renderCards, 140);
+    _searchTimer = setTimeout(renderCards, window.__FV_LITE ? 250 : 140);
   });
   clearBtn.addEventListener('click', ()=>{
     searchInput.value = '';
@@ -696,4 +719,5 @@
   renderHooks.push(restoreOpenItem);
   renderAll();
   scrollToItem();
+  SEARCH.warm();
 })();

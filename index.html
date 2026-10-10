@@ -3,7 +3,32 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#060a13">
 <title>Formula Vault — JEE Formula Reference</title>
+<script>
+(function(){
+  try{
+    var lite=false, nav=navigator, mq=window.matchMedia, cn=nav.connection||nav.mozConnection||nav.webkitConnection;
+    if(mq && mq('(prefers-reduced-motion: reduce)').matches) lite=true;
+    var dm=nav.deviceMemory; if(typeof dm==='number' && dm>0 && dm<=4) lite=true;
+    var hc=nav.hardwareConcurrency; if(typeof hc==='number' && hc>0 && hc<=4) lite=true;
+    if(cn){ if(cn.saveData===true) lite=true; var et=cn.effectiveType; if(et==='slow-2g'||et==='2g'||et==='3g') lite=true; }
+    var pref=null; try{ pref=localStorage.getItem('fvault:perf'); }catch(e){}
+    if(pref==='lite') lite=true; else if(pref==='full') lite=false;
+    var el=document.documentElement;
+    el.classList.add(lite?'perf-lite':'perf-full');
+    window.__FV_LITE=lite;
+    window.__FVsetPerf=function(mode){
+      try{ localStorage.setItem('fvault:perf',mode); }catch(e){}
+      var on=(mode==='lite');
+      el.classList.toggle('perf-lite',on); el.classList.toggle('perf-full',!on);
+      window.__FV_LITE=on;
+      if(window.FV && window.FV.renderAll) window.FV.renderAll();
+    };
+  }catch(e){ document.documentElement.classList.add('perf-full'); }
+})();
+</script>
 <link rel="stylesheet" href="css/base.css">
 <link rel="stylesheet" href="css/layout.css">
 <link rel="stylesheet" href="css/cards.css">

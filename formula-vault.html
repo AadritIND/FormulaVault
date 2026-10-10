@@ -3,7 +3,32 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#060a13">
 <title>Formula Vault — JEE Formula Reference</title>
+<script>
+(function(){
+  try{
+    var lite=false, nav=navigator, mq=window.matchMedia, cn=nav.connection||nav.mozConnection||nav.webkitConnection;
+    if(mq && mq('(prefers-reduced-motion: reduce)').matches) lite=true;
+    var dm=nav.deviceMemory; if(typeof dm==='number' && dm>0 && dm<=4) lite=true;
+    var hc=nav.hardwareConcurrency; if(typeof hc==='number' && hc>0 && hc<=4) lite=true;
+    if(cn){ if(cn.saveData===true) lite=true; var et=cn.effectiveType; if(et==='slow-2g'||et==='2g'||et==='3g') lite=true; }
+    var pref=null; try{ pref=localStorage.getItem('fvault:perf'); }catch(e){}
+    if(pref==='lite') lite=true; else if(pref==='full') lite=false;
+    var el=document.documentElement;
+    el.classList.add(lite?'perf-lite':'perf-full');
+    window.__FV_LITE=lite;
+    window.__FVsetPerf=function(mode){
+      try{ localStorage.setItem('fvault:perf',mode); }catch(e){}
+      var on=(mode==='lite');
+      el.classList.toggle('perf-lite',on); el.classList.toggle('perf-full',!on);
+      window.__FV_LITE=on;
+      if(window.FV && window.FV.renderAll) window.FV.renderAll();
+    };
+  }catch(e){ document.documentElement.classList.add('perf-full'); }
+})();
+</script>
 <style>
   :root{
     --bg-0:#060a13;
@@ -1234,6 +1259,45 @@
     .study-face .s-eq{ font-size:20px; }
     .study-btns{ margin-top:12px; }
     .study-btns .fv-btn{ padding:9px 12px; }
+  }
+
+  /* ================= low-power performance mode ================= */
+  html.perf-lite{ --glass-fill: rgba(17,26,46,0.93); --glass-fill-strong: rgba(25,35,60,0.97);
+    --input-bg: rgba(17,26,46,0.9); --input-bg-focus: rgba(25,35,60,0.98);
+    --soft-fill: rgba(186,209,255,0.07); --pill-bg: rgba(186,209,255,0.07);
+    --header-bg: rgba(8,13,24,0.97); }
+  html[data-theme="light"].perf-lite{ --glass-fill: rgba(255,255,255,0.94); --glass-fill-strong: rgba(255,255,255,0.98);
+    --input-bg: rgba(255,255,255,0.92); --input-bg-focus: rgba(255,255,255,0.99);
+    --header-bg: rgba(244,249,255,0.97); }
+  html.perf-lite .bg .blob{ display:none !important; }
+  html.perf-lite .bg{ background: radial-gradient(120% 90% at 50% -10%, var(--bg-1) 0%, var(--bg-0) 58%); }
+  html.perf-lite .glass,
+  html.perf-lite .face,
+  html.perf-lite .deriv-card,
+  html.perf-lite .law-card,
+  html.perf-lite header.top,
+  html.perf-lite .card-btn,
+  html.perf-lite .fv-toast,
+  html.perf-lite .fv-ov-panel,
+  html.perf-lite .study-face,
+  html.perf-lite .fv-ov.drawer.threads-open .fv-threads{
+    -webkit-backdrop-filter:none !important; backdrop-filter:none !important;
+  }
+  html.perf-lite .fv-ov-panel{ background: var(--glass-fill-strong); }
+  html.perf-lite .fv-toast{ background: rgba(15,22,40,.97); }
+  html[data-theme="light"].perf-lite .fv-toast{ background: rgba(255,255,255,.98); }
+  html.perf-lite .fv-ov.drawer.threads-open .fv-threads{ background: var(--header-bg); }
+  html.perf-lite .card-outer:hover .card-inner{ transform:none; }
+  html.perf-lite .card-outer.flipped:hover .card-inner{ transform: rotateY(180deg); }
+  html.perf-lite #grid > *{ opacity:1 !important; transform:none !important;
+    transition:none !important; animation:none !important; }
+  html.perf-lite *,
+  html.perf-lite *::before,
+  html.perf-lite *::after{
+    animation-duration:.001ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;
+    scroll-behavior:auto !important;
   }
 </style>
 </head>
@@ -5269,6 +5333,13 @@
     });
   });
 
+  /* ---------- O(1) lookup by identity (avoids O(n^2) findIndex in renders) ---------- */
+  function cardKey(c){ return c.cls+'|'+c.subject+'|'+c.chapter+'|'+c.t; }
+  function buildIndex(list){ const m=new Map(); for(let i=0;i<list.length;i++) m.set(cardKey(list[i]), i); return m; }
+  const CIDX = buildIndex(CARDS);
+  const DIDX = buildIndex(DCARDS);
+  const LIDX = buildIndex(LCARDS);
+
   /* ============ typo-tolerant universal search ("AI search") ============ */
   /*
     Searches the ENTIRE vault (formulas + derivations + laws, all classes &
@@ -5371,9 +5442,9 @@
         low: tokens(c.search).map(_mk)
       };
     }
-    function scoreCard(qt,c){
+    function mkQ(tt){ return { w:tt, st:stem(tt), m:maskOf(tt), sm:maskOf(stem(tt)) }; }
+    function scoreCard(qq,c){
       const p=pools(c);
-      const qq = qt.map(function(tt){ return { w:tt, st:stem(tt), m:maskOf(tt), sm:maskOf(stem(tt)) }; });
       let total=0, matched=0, bestAny=0, fuzzy=false;
       for(const qx of qq){
         let best=-1, bf=false, w=0;
@@ -5385,14 +5456,16 @@
         total += best * w;
         matched++; if(bf) fuzzy=true;
       }
+      const nq = qq.length;
       if(!matched) return null;
-      const minCov = qt.length===1 ? 1 : Math.ceil(qt.length*0.5);
+      const minCov = nq===1 ? 1 : Math.ceil(nq*0.5);
       if(matched < minCov || bestAny < 0.7) return null;
-      return { score: total + (matched>=qt.length?0.15:0), coverage: matched/qt.length, fuzzy:fuzzy };
+      return { score: total + (matched>=nq?0.15:0), coverage: matched/nq, fuzzy:fuzzy };
     }
     function run(list, qt){
       const out=[];
-      for(const c of list){ const r=scoreCard(qt,c); if(r) out.push({card:c, score:r.score, coverage:r.coverage, fuzzy:r.fuzzy}); }
+      const qq = qt.map(mkQ);
+      for(const c of list){ const r=scoreCard(qq,c); if(r) out.push({card:c, score:r.score, coverage:r.coverage, fuzzy:r.fuzzy}); }
       out.sort(function(a,b){ return (b.coverage-a.coverage) || (b.score-a.score); });
       return out;
     }
@@ -5405,7 +5478,17 @@
       return { formulas:formulas, derivations:derivations, laws:laws,
                fuzzy: formulas.some(m=>m.fuzzy)||derivations.some(m=>m.fuzzy)||laws.some(m=>m.fuzzy), tokens:qt };
     }
-    return { search:search, tokens:tokens, STOP:STOP };
+    /* pre-tokenise every card during idle time so the first real search is instant */
+    function warm(){
+      const all=CARDS.concat(DCARDS,LCARDS); let i=0;
+      const idle = window.requestIdleCallback || function(f){ setTimeout(f,1); };
+      (function step(){
+        const end=Math.min(i+150, all.length);
+        for(; i<end; i++){ try{ pools(all[i]); }catch(e){} }
+        if(i<all.length) idle(step);
+      })();
+    }
+    return { search:search, tokens:tokens, STOP:STOP, warm:warm };
   })();
 
   /* ---------- state ---------- */
@@ -5506,12 +5589,13 @@
       ? '<div class="case-box" style="--accent-c:'+accent+'"><span class="case-label">Special cases</span><ul>' + c.cases.map(x=>'<li>'+x+'</li>').join('') + '</ul></div>'
       : '';
     const tipHTML = c.tip ? '<div class="tip-box"><b>Tip — </b>'+c.tip+'</div>' : '';
+    const isFav = !!(window.__fvIsFav && window.__fvIsFav(c));
     return (
       '<div class="card-outer" data-idx="'+idx+'" tabindex="0" role="button" aria-label="'+c.t+', tap to flip">'+
         '<div class="card-inner">'+
           '<div class="face face-front" style="--accent-c:'+accent+'">'+
             '<div class="card-actions">'+
-              '<button class="card-btn fv-fav'+(window.__fvIsFav&&window.__fvIsFav(c)?' active':'')+'" data-fav="'+idx+'" title="Bookmark" aria-label="Bookmark formula">'+(window.__fvIsFav&&window.__fvIsFav(c)?window.__I.starFilled:window.__I.star)+'</button>'+
+              '<button class="card-btn fv-fav'+(isFav?' active':'')+'" data-fav="'+idx+'" title="Bookmark" aria-label="Bookmark formula">'+(isFav?window.__I.starFilled:window.__I.star)+'</button>'+
               '<button class="card-btn fv-explain" data-explain="'+idx+'" title="Explain with AI" aria-label="Explain with AI">'+window.__I.sparkles+'</button>'+
             '</div>'+
             tag +
@@ -5615,7 +5699,8 @@
       chaptersData.forEach(ch=>{
         html += '<div class="chapter-heading"><h2>'+ch.chapter+'</h2><span>'+ch.formulas.length+' formulas</span></div>';
         ch.formulas.forEach(f=>{
-          const idx = CARDS.findIndex(c=>c.cls===ch.cls && c.subject===ch.subject && c.chapter===ch.chapter && c.t===f.t);
+          const idx = CIDX.get(ch.cls+'|'+ch.subject+'|'+ch.chapter+'|'+f.t);
+          if(idx===undefined) return;
           html += cardHTML(CARDS[idx], idx, false);
           count++;
         });
@@ -5673,15 +5758,15 @@
       }
       if(cf.list.length){
         html += '<div class="chapter-heading"><h2>Formulas</h2><span>'+(cf.total>cf.list.length ? cf.list.length+' of '+cf.total+' · top matches' : cf.total+' found')+'</span></div>';
-        cf.list.forEach((m)=>{ html += cardHTML(m.card, CARDS.indexOf(m.card), true, hl); });
+        cf.list.forEach((m)=>{ html += cardHTML(m.card, CIDX.get(cardKey(m.card)), true, hl); });
       }
       if(cd.list.length){
         html += '<div class="chapter-heading"><h2>Derivations</h2><span>'+(cd.total>cd.list.length ? cd.list.length+' of '+cd.total+' · top matches' : cd.total+' found')+'</span></div>';
-        cd.list.forEach((m)=>{ html += derivCardHTML(m.card, DCARDS.indexOf(m.card), hl); });
+        cd.list.forEach((m)=>{ html += derivCardHTML(m.card, DIDX.get(cardKey(m.card)), hl); });
       }
       if(cl.list.length){
         html += '<div class="chapter-heading"><h2>Laws</h2><span>'+(cl.total>cl.list.length ? cl.list.length+' of '+cl.total+' · top matches' : cl.total+' found')+'</span></div>';
-        cl.list.forEach((m)=>{ html += lawCardHTML(m.card, LCARDS.indexOf(m.card), hl); });
+        cl.list.forEach((m)=>{ html += lawCardHTML(m.card, LIDX.get(cardKey(m.card)), hl); });
       }
     }
     controlsWrap.style.opacity = '0.4';
@@ -5702,7 +5787,8 @@
       chaptersData.forEach(ch=>{
         html += '<div class="chapter-heading"><h2>'+ch.chapter+'</h2><span>'+ch.laws.length+' law'+(ch.laws.length===1?'':'s')+'</span></div>';
         ch.laws.forEach(l=>{
-          const idx = LCARDS.findIndex(c=>c.cls===ch.cls && c.subject===ch.subject && c.chapter===ch.chapter && c.t===l.t);
+          const idx = LIDX.get(ch.cls+'|'+ch.subject+'|'+ch.chapter+'|'+l.t);
+          if(idx===undefined) return;
           html += lawCardHTML(LCARDS[idx], idx);
           count++;
         });
@@ -5726,7 +5812,8 @@
       chaptersData.forEach(ch=>{
         html += '<div class="chapter-heading"><h2>'+ch.chapter+'</h2><span>'+ch.derivations.length+' derivation'+(ch.derivations.length===1?'':'s')+'</span></div>';
         ch.derivations.forEach(d=>{
-          const idx = DCARDS.findIndex(c=>c.cls===ch.cls && c.subject===ch.subject && c.chapter===ch.chapter && c.t===d.t);
+          const idx = DIDX.get(ch.cls+'|'+ch.subject+'|'+ch.chapter+'|'+d.t);
+          if(idx===undefined) return;
           html += derivCardHTML(DCARDS[idx], idx);
           count++;
         });
@@ -5847,7 +5934,7 @@
       renderCards();
       return;
     }
-    _searchTimer = setTimeout(renderCards, 140);
+    _searchTimer = setTimeout(renderCards, window.__FV_LITE ? 250 : 140);
   });
   clearBtn.addEventListener('click', ()=>{
     searchInput.value = '';
@@ -5868,6 +5955,7 @@
   renderHooks.push(restoreOpenItem);
   renderAll();
   scrollToItem();
+  SEARCH.warm();
 })();
 </script>
 <script>
@@ -5923,6 +6011,7 @@ function confetti(n){
 /* ============ scroll reveal ============ */
 const io = ('IntersectionObserver' in window) ? new IntersectionObserver(function(es){ es.forEach(en=>{ if(en.isIntersecting){ en.target.classList.add('fv-in'); io.unobserve(en.target); } }); }, {rootMargin:'0px 0px -6% 0px', threshold:0.05}) : null;
 function reveal(){
+  if(window.__FV_LITE){ $$('#grid > *').forEach(function(el){ el.classList.add('fv-reveal','fv-in'); }); return; }
   $$('#grid > *').forEach(function(el,i){
     if(!el.classList.contains('fv-reveal')){ el.classList.add('fv-reveal'); if(io){ el.style.transitionDelay=Math.min((i%12)*40,420)+'ms'; io.observe(el); } else el.classList.add('fv-in'); }
   });

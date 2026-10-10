@@ -1025,28 +1025,6 @@
     @page{ margin:12mm; }
   }
 
-  /* study mode */
-  .fv-ov.study{ padding:0; }
-  .fv-ov.study .fv-ov-panel{ max-width:none; width:100%; height:100%; max-height:none; border-radius:0; background:transparent; border:none; box-shadow:none; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:18px; }
-  .study-top{ position:absolute; top:18px; left:0; right:0; display:flex; align-items:center; justify-content:center; gap:14px; padding:0 18px; }
-  .study-progress{ flex:1; max-width:420px; height:6px; border-radius:99px; background:var(--soft-fill); overflow:hidden; border:1px solid var(--soft-border); }
-  .study-progress i{ display:block; height:100%; background:linear-gradient(90deg,var(--acc),var(--indigo)); transition:width .4s var(--ease); border-radius:99px; }
-  .study-card{ width:min(620px, 92vw); height:min(380px, 56vh); perspective:1600px; cursor:pointer; }
-  .study-inner{ position:relative; width:100%; height:100%; transform-style:preserve-3d; transition:transform .6s var(--ease); }
-  .study-card.flipped .study-inner{ transform:rotateY(180deg); }
-  .study-face{ position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden; border-radius:24px; border:1px solid var(--glass-border-strong); background:var(--glass-fill); backdrop-filter:blur(24px) saturate(180%); box-shadow:0 24px 70px rgba(0,0,0,.45); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:30px; gap:14px; }
-  .study-face.back{ transform:rotateY(180deg); overflow-y:auto; justify-content:flex-start; padding-top:26px; }
-  .study-face .s-tag{ font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--acc); }
-  .study-face .s-title{ font-size:19px; font-weight:800; line-height:1.3; }
-  .study-face .s-eq{ font-size:26px; font-family:"New York", ui-serif, Georgia, serif; font-style:italic; line-height:1.5; }
-  .study-face .s-body{ font-size:13px; color:var(--text-mid); text-align:left; line-height:1.6; width:100%; }
-  .study-btns{ display:flex; gap:12px; margin-top:22px; }
-  .study-btns .fv-btn{ min-width:130px; padding:12px 20px; }
-  .study-btns .again{ border-color:rgba(255,93,108,.5); color:var(--bad); }
-  .study-btns .got{ background:linear-gradient(135deg, rgba(47,191,113,.9), rgba(47,191,113,.7)); color:#fff; border:none; }
-  .study-btns .k{ opacity:.55; font-size:10px; border:1px solid currentColor; border-radius:5px; padding:1px 5px; margin-left:4px; }
-  .study-hintkeys{ margin-top:14px; font-size:11px; color:var(--text-low); }
-
   /* calculators */
   .fv-ov.calc-modal .fv-ov-panel{ max-width:720px; }
   .calc-mode-tabs{ display:flex; gap:6px; overflow-x:auto; padding:0 18px 12px; scrollbar-width:none; }
@@ -1173,7 +1151,7 @@
 
   @media (max-width: 640px){
     .fv-ov{ padding: calc(10px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left)); }
-    .fv-ov.drawer, .fv-ov.study{ padding:0; }
+    .fv-ov.drawer{ padding:0; }
     .head-actions{ gap:5px; }
     .head-actions .hbtn{ height:38px; min-width:36px; padding:0 8px; }
     .head-actions .hbtn:not(.ai){ font-size:12px; }
@@ -1197,15 +1175,6 @@
     .sh-scroll{ max-height:44vh; }
     .sheet{ columns:1; }
 
-    .study-top{ top: calc(16px + env(safe-area-inset-top)); }
-    .fv-ov.study .fv-ov-panel{ padding-top: calc(16px + env(safe-area-inset-top)); padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
-    .study-card{ width:94vw; height:min(460px, 60vh); }
-    .study-face{ padding:22px; border-radius:20px; }
-    .study-face .s-eq{ font-size:23px; }
-    .study-face .s-title{ font-size:17px; }
-    .study-btns{ width:100%; max-width:420px; margin-top:18px; }
-    .study-btns .fv-btn{ flex:1; min-width:0; padding:11px 12px; }
-
     .fav-row{ padding:10px; }
 
     /* palette (Ctrl+K) is desktop-only */
@@ -1222,18 +1191,6 @@
       -webkit-backdrop-filter:blur(24px) saturate(180%); backdrop-filter:blur(24px) saturate(180%);
     }
     html[data-theme="light"] .fv-ov.drawer.threads-open .fv-threads{ background:rgba(242,248,255,0.98); }
-  }
-
-  @media (max-width: 400px){
-    .study-face .s-eq{ font-size:21px; }
-  }
-
-  @media (max-height: 520px) and (orientation: landscape){
-    .study-card{ width:min(560px, 90vw); height:72vh; }
-    .study-face{ padding:18px; }
-    .study-face .s-eq{ font-size:20px; }
-    .study-btns{ margin-top:12px; }
-    .study-btns .fv-btn{ padding:9px 12px; }
   }
 </style>
 </head>
@@ -1266,7 +1223,6 @@
       <button class="hbtn glass" id="fvBtnPalette" title="Command palette — Ctrl+K">⌘K</button>
       <button class="hbtn glass" id="fvBtnFavs" title="Bookmarked formulas"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><span class="hbadge" id="fvFavCount"></span></button>
       <button class="hbtn glass" data-open="calc" title="Open calculators"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg><span class="lbl">Calculators</span></button>
-      <button class="hbtn glass" data-open="study" title="Open study mode"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 7l8 5 8-5-8-5Z"/><path d="m17 11 3 2-8 5-8-5 3-2"/><path d="m17 16 3 2-8 5-8-5 3-2"/></svg><span class="lbl">Study</span></button>
       <button class="hbtn glass ai" id="fvBtnTutor" title="Open AI Tutor"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.6a2 2 0 0 0 1.3 1.3L20.8 12l-5.6 1.9a2 2 0 0 0-1.3 1.3L12 20.8l-1.9-5.6a2 2 0 0 0-1.3-1.3L3.2 12l5.6-1.9a2 2 0 0 0 1.3-1.3z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg><span class="lbl">AI Tutor</span></button>
     </div>
     <button class="theme-toggle glass" id="themeToggle" aria-label="Toggle light and dark mode">
@@ -5888,20 +5844,18 @@ const store = {
 };
 let favs = store.get('favs', []); if(!Array.isArray(favs)) favs=[];
 let sheets = store.get('sheets', 0); if(!Number.isFinite(sheets)||sheets<0) sheets=0;
-let study = store.get('study', {}); if(!study||typeof study!=='object'||Array.isArray(study)) study={};
 let settings = store.get('settings', {provider:'auto'});
 if(!settings||typeof settings!=='object'||Array.isArray(settings)) settings={provider:'auto'};
 if(typeof settings.provider!=='string'||['auto','groq','google','openrouter'].indexOf(settings.provider)===-1) settings.provider='auto';
 if(!settings.aiKeys||typeof settings.aiKeys!=='object') settings.aiKeys={};
 ['groq','google','openrouter'].forEach(function(p){ settings.aiKeys[p]=typeof settings.aiKeys[p]==='string'?settings.aiKeys[p]:''; });
 function key(c){ return c.cls+'|'+c.subject+'|'+c.chapter+'|'+c.t; }
-function saveAll(){ store.set('favs',favs); store.set('sheets',sheets); store.set('study',study); store.set('settings',settings); }
+function saveAll(){ store.set('favs',favs); store.set('sheets',sheets); store.set('settings',settings); }
 window.__fvIsFav = function(c){ return favs.indexOf(key(c))!==-1; };
 
 /* ============ helpers ============ */
 function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function stripHtml(s){ const d=document.createElement('div'); d.innerHTML=s||''; return (d.textContent||'').replace(/\s+/g,' ').trim(); }
-function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
 
 function toast(msg, ms){
   const host=$('#fvToasts'); if(!host) return;
@@ -6457,60 +6411,7 @@ function openExplain(c){
     });
   }
 
-  /* ============ Study mode (flashcards) ============ */
-  function openStudy(){
-  let queue;
-  const favCards=favs.map(k=>CARDS.find(c=>key(c)===k)).filter(Boolean);
-  if(favCards.length>=5) queue=shuffle(favCards.slice());
-  else{ queue=CARDS.filter(c=>c.subject===state.subject&&c.chapter===state.chapter); if(queue.length<5) queue=CARDS.slice(); queue=shuffle(queue.slice()); }
-  queue=queue.slice(0,15);
-  const ST={q:queue,i:0,got:0,again:0,handler:null};
-  const w=openOverlay('<div class="study-top"><button class="fv-icon-btn" id="stEnd" title="End session">×</button><div class="study-progress"><i id="stProg" style="width:0%"></i></div><span class="ctx-pill" id="stCnt"></span></div>'+
-    '<div class="study-card" id="stCard"><div class="study-inner" id="stInner"></div></div>'+
-    '<div class="study-btns"><button class="fv-btn again" id="stAgain">Again<span class="k">1</span></button><button class="fv-btn got" id="stGot">Got it<span class="k">2</span></button></div>'+
-    '<div class="study-hintkeys">Click card or press Space to flip · 1 = again · 2 = got it</div>','study');
-  function show(){
-    const c=ST.q[ST.i];
-    w.querySelector('#stInner').innerHTML=
-      '<div class="study-face front"><div class="s-tag">'+SUBJ[c.subject]+' · '+escHtml(c.chapter)+'</div><div class="s-title">'+escHtml(c.t)+'</div><div class="s-eq">'+c.eq+'</div><div class="study-hintkeys">tap to reveal details</div></div>'+
-      '<div class="study-face back"><div class="s-tag">Details</div><div class="s-title" style="font-size:15px">'+escHtml(c.t)+'</div>'+
-        (c.sym&&c.sym.length?'<div class="s-body"><b>Symbols</b><br>'+c.sym.map(s=>'• <i>'+escHtml(s[0])+'</i> — '+escHtml(s[1])).join('<br>')+'</div>':'')+
-        (c.cases&&c.cases.length?'<div class="s-body"><b>Special cases</b><br>'+c.cases.map(x=>'• '+escHtml(FV.strip(x))).join('<br>')+'</div>':'')+
-        (c.tip?'<div class="s-body" style="border-left:2px solid var(--amber);padding-left:10px"><b style="color:var(--amber)">Tip</b> — '+escHtml(c.tip)+'</div>':'')+
-      '</div>';
-    w.querySelector('#stCnt').textContent=(ST.i+1)+' / '+ST.q.length;
-    w.querySelector('#stProg').style.width=(ST.i/ST.q.length*100)+'%';
-    w.querySelector('#stCard').classList.remove('flipped');
-  }
-  function flip(){ w.querySelector('#stCard').classList.toggle('flipped'); }
-  function rate(got){
-    const c=ST.q[ST.i]; const k=key(c); const rec=study[k]||(study[k]={seen:0,known:0});
-    rec.seen++; if(got) rec.known++; else rec.known=Math.max(0,rec.known-1);
-    if(got) ST.got++; else ST.again++; store.set('study',study);
-    if(ST.i+1>=ST.q.length){ summary(); closeOverlay(w); }
-    else{ ST.i++; show(); }
-  }
-  function summary(){
-    const total=ST.got+ST.again; if(!total) return;
-    const pct=Math.round(100*ST.got/total);
-    toast('Session: '+ST.got+' correct, '+ST.again+' again ('+pct+'%)');
-    if(pct>=80) confetti(80);
-  }
-  w.querySelector('#stCard').onclick=flip;
-  w.querySelector('#stAgain').onclick=()=>rate(false);
-  w.querySelector('#stGot').onclick=()=>rate(true);
-  w.querySelector('#stEnd').onclick=()=>{ summary(); closeOverlay(w); };
-  ST.handler=function(e){
-    if(overlayStack.indexOf(w)===-1){ document.removeEventListener('keydown',ST.handler); return; }
-    if(e.code==='Space'){ e.preventDefault(); flip(); }
-    else if(e.key==='1') rate(false);
-    else if(e.key==='2') rate(true);
-  };
-  document.addEventListener('keydown',ST.handler);
-  show();
-}
-
-/* ============ Smart calculators ============ */
+  /* ============ Smart calculators ============ */
 function fmtN(x,d){
   if(typeof x!=='number'||!isFinite(x)) return '—';
   d=(d==null?4:d);
@@ -7263,20 +7164,20 @@ function openCalc(){
 }
 
 function exportData(){
-  const blob=new Blob([JSON.stringify({favs:favs,sheets:sheets,study:study,settings:settings,v:2},null,2)],{type:'application/json'});
+  const blob=new Blob([JSON.stringify({favs:favs,sheets:sheets,settings:settings,v:2},null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='formula-vault-data.json'; a.click();
   toast('Data exported');
 }
 function importData(){
   const inp=document.createElement('input'); inp.type='file'; inp.accept='.json';
   inp.onchange=function(){ const f=inp.files[0]; if(!f) return; const r=new FileReader();
-    r.onload=function(){ try{ const d=JSON.parse(r.result); if(d.favs)favs=d.favs; if(d.sheets)sheets=d.sheets; if(d.study)study=d.study; if(d.settings)settings=Object.assign({},settings,d.settings); saveAll(); updateFavBadge(); FV.renderAll(); toast('Data imported'); }catch(e){ toast('Invalid file'); } };
+    r.onload=function(){ try{ const d=JSON.parse(r.result); if(d.favs)favs=d.favs; if(d.sheets)sheets=d.sheets; if(d.settings)settings=Object.assign({},settings,d.settings); saveAll(); updateFavBadge(); FV.renderAll(); toast('Data imported'); }catch(e){ toast('Invalid file'); } };
     r.readAsText(f); };
   inp.click();
 }
 function resetAll(){
-  if(!confirm('Reset all bookmarks, study and revision-sheet progress?')) return;
-  favs=[]; sheets=0; study={};
+  if(!confirm('Reset all bookmarks and revision-sheet progress?')) return;
+  favs=[]; sheets=0;
   saveAll(); updateFavBadge(); FV.renderAll(); toast('Progress reset');
 }
 
@@ -7314,7 +7215,6 @@ function jumpTo(cls,subject,chapter,mode){
   const its=[
     {t:'Open AI Tutor',run:openTutor,k:'AI'},
     {t:'Build a revision sheet (print / PDF)',run:openSheet},
-    {t:'Study mode — flashcards',run:openStudy},
     {t:'Smart calculators',run:openCalc},
     {t:'My bookmarks',run:openFavs},
     {t:'Surprise me — random formula + AI explanation',run:function(){ const c=CARDS[Math.floor(Math.random()*CARDS.length)]; jumpToCard(c); setTimeout(()=>openExplain(c),600); }},
@@ -7362,7 +7262,7 @@ document.getElementById('grid').addEventListener('click', function(e){
 document.getElementById('fvBtnTutor').onclick=openTutor;
 document.getElementById('fvBtnFavs').onclick=openFavs;
 document.getElementById('fvBtnPalette').onclick=openPalette;
-$$('[data-open]').forEach(function(b){ b.addEventListener('click',function(){ const fn={tutor:openTutor,sheet:openSheet,study:openStudy,calc:openCalc}[b.dataset.open]; if(fn) fn(); }); });
+$$('[data-open]').forEach(function(b){ b.addEventListener('click',function(){ const fn={tutor:openTutor,sheet:openSheet,calc:openCalc}[b.dataset.open]; if(fn) fn(); }); });
 document.addEventListener('keydown', function(e){
   if((e.ctrlKey||e.metaKey)&&String(e.key).toLowerCase()==='k'){ e.preventDefault(); openPalette(); }
   else if(e.key==='/'&&overlayStack.length===0&&!/input|textarea|select/i.test(e.target.tagName||'')){ e.preventDefault(); openPalette(); }

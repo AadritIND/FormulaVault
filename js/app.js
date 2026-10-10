@@ -15,20 +15,18 @@ const store = {
 };
 let favs = store.get('favs', []); if(!Array.isArray(favs)) favs=[];
 let sheets = store.get('sheets', 0); if(!Number.isFinite(sheets)||sheets<0) sheets=0;
-let study = store.get('study', {}); if(!study||typeof study!=='object'||Array.isArray(study)) study={};
 let settings = store.get('settings', {provider:'auto'});
 if(!settings||typeof settings!=='object'||Array.isArray(settings)) settings={provider:'auto'};
 if(typeof settings.provider!=='string'||['auto','groq','google','openrouter'].indexOf(settings.provider)===-1) settings.provider='auto';
 if(!settings.aiKeys||typeof settings.aiKeys!=='object') settings.aiKeys={};
 ['groq','google','openrouter'].forEach(function(p){ settings.aiKeys[p]=typeof settings.aiKeys[p]==='string'?settings.aiKeys[p]:''; });
 function key(c){ return c.cls+'|'+c.subject+'|'+c.chapter+'|'+c.t; }
-function saveAll(){ store.set('favs',favs); store.set('sheets',sheets); store.set('study',study); store.set('settings',settings); }
+function saveAll(){ store.set('favs',favs); store.set('sheets',sheets); store.set('settings',settings); }
 window.__fvIsFav = function(c){ return favs.indexOf(key(c))!==-1; };
 
 /* ============ helpers ============ */
 function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function stripHtml(s){ const d=document.createElement('div'); d.innerHTML=s||''; return (d.textContent||'').replace(/\s+/g,' ').trim(); }
-function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
 
 function toast(msg, ms){
   const host=$('#fvToasts'); if(!host) return;
@@ -593,60 +591,7 @@ function openExplain(c){
     });
   }
 
-  /* ============ Study mode (flashcards) ============ */
-  function openStudy(){
-  let queue;
-  const favCards=favs.map(k=>CARDS.find(c=>key(c)===k)).filter(Boolean);
-  if(favCards.length>=5) queue=shuffle(favCards.slice());
-  else{ queue=CARDS.filter(c=>c.subject===state.subject&&c.chapter===state.chapter); if(queue.length<5) queue=CARDS.slice(); queue=shuffle(queue.slice()); }
-  queue=queue.slice(0,15);
-  const ST={q:queue,i:0,got:0,again:0,handler:null};
-  const w=openOverlay('<div class="study-top"><button class="fv-icon-btn" id="stEnd" title="End session">×</button><div class="study-progress"><i id="stProg" style="width:0%"></i></div><span class="ctx-pill" id="stCnt"></span></div>'+
-    '<div class="study-card" id="stCard"><div class="study-inner" id="stInner"></div></div>'+
-    '<div class="study-btns"><button class="fv-btn again" id="stAgain">Again<span class="k">1</span></button><button class="fv-btn got" id="stGot">Got it<span class="k">2</span></button></div>'+
-    '<div class="study-hintkeys">Click card or press Space to flip · 1 = again · 2 = got it</div>','study');
-  function show(){
-    const c=ST.q[ST.i];
-    w.querySelector('#stInner').innerHTML=
-      '<div class="study-face front"><div class="s-tag">'+SUBJ[c.subject]+' · '+escHtml(c.chapter)+'</div><div class="s-title">'+escHtml(c.t)+'</div><div class="s-eq">'+c.eq+'</div><div class="study-hintkeys">tap to reveal details</div></div>'+
-      '<div class="study-face back"><div class="s-tag">Details</div><div class="s-title" style="font-size:15px">'+escHtml(c.t)+'</div>'+
-        (c.sym&&c.sym.length?'<div class="s-body"><b>Symbols</b><br>'+c.sym.map(s=>'• <i>'+escHtml(s[0])+'</i> — '+escHtml(s[1])).join('<br>')+'</div>':'')+
-        (c.cases&&c.cases.length?'<div class="s-body"><b>Special cases</b><br>'+c.cases.map(x=>'• '+escHtml(FV.strip(x))).join('<br>')+'</div>':'')+
-        (c.tip?'<div class="s-body" style="border-left:2px solid var(--amber);padding-left:10px"><b style="color:var(--amber)">Tip</b> — '+escHtml(c.tip)+'</div>':'')+
-      '</div>';
-    w.querySelector('#stCnt').textContent=(ST.i+1)+' / '+ST.q.length;
-    w.querySelector('#stProg').style.width=(ST.i/ST.q.length*100)+'%';
-    w.querySelector('#stCard').classList.remove('flipped');
-  }
-  function flip(){ w.querySelector('#stCard').classList.toggle('flipped'); }
-  function rate(got){
-    const c=ST.q[ST.i]; const k=key(c); const rec=study[k]||(study[k]={seen:0,known:0});
-    rec.seen++; if(got) rec.known++; else rec.known=Math.max(0,rec.known-1);
-    if(got) ST.got++; else ST.again++; store.set('study',study);
-    if(ST.i+1>=ST.q.length){ summary(); closeOverlay(w); }
-    else{ ST.i++; show(); }
-  }
-  function summary(){
-    const total=ST.got+ST.again; if(!total) return;
-    const pct=Math.round(100*ST.got/total);
-    toast('Session: '+ST.got+' correct, '+ST.again+' again ('+pct+'%)');
-    if(pct>=80) confetti(80);
-  }
-  w.querySelector('#stCard').onclick=flip;
-  w.querySelector('#stAgain').onclick=()=>rate(false);
-  w.querySelector('#stGot').onclick=()=>rate(true);
-  w.querySelector('#stEnd').onclick=()=>{ summary(); closeOverlay(w); };
-  ST.handler=function(e){
-    if(overlayStack.indexOf(w)===-1){ document.removeEventListener('keydown',ST.handler); return; }
-    if(e.code==='Space'){ e.preventDefault(); flip(); }
-    else if(e.key==='1') rate(false);
-    else if(e.key==='2') rate(true);
-  };
-  document.addEventListener('keydown',ST.handler);
-  show();
-}
-
-/* ============ Smart calculators ============ */
+  /* ============ Smart calculators ============ */
 function fmtN(x,d){
   if(typeof x!=='number'||!isFinite(x)) return '—';
   d=(d==null?4:d);
@@ -1399,20 +1344,20 @@ function openCalc(){
 }
 
 function exportData(){
-  const blob=new Blob([JSON.stringify({favs:favs,sheets:sheets,study:study,settings:settings,v:2},null,2)],{type:'application/json'});
+  const blob=new Blob([JSON.stringify({favs:favs,sheets:sheets,settings:settings,v:2},null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='formula-vault-data.json'; a.click();
   toast('Data exported');
 }
 function importData(){
   const inp=document.createElement('input'); inp.type='file'; inp.accept='.json';
   inp.onchange=function(){ const f=inp.files[0]; if(!f) return; const r=new FileReader();
-    r.onload=function(){ try{ const d=JSON.parse(r.result); if(d.favs)favs=d.favs; if(d.sheets)sheets=d.sheets; if(d.study)study=d.study; if(d.settings)settings=Object.assign({},settings,d.settings); saveAll(); updateFavBadge(); FV.renderAll(); toast('Data imported'); }catch(e){ toast('Invalid file'); } };
+    r.onload=function(){ try{ const d=JSON.parse(r.result); if(d.favs)favs=d.favs; if(d.sheets)sheets=d.sheets; if(d.settings)settings=Object.assign({},settings,d.settings); saveAll(); updateFavBadge(); FV.renderAll(); toast('Data imported'); }catch(e){ toast('Invalid file'); } };
     r.readAsText(f); };
   inp.click();
 }
 function resetAll(){
-  if(!confirm('Reset all bookmarks, study and revision-sheet progress?')) return;
-  favs=[]; sheets=0; study={};
+  if(!confirm('Reset all bookmarks and revision-sheet progress?')) return;
+  favs=[]; sheets=0;
   saveAll(); updateFavBadge(); FV.renderAll(); toast('Progress reset');
 }
 
@@ -1458,7 +1403,7 @@ document.getElementById('grid').addEventListener('click', function(e){
 });
 document.getElementById('fvBtnTutor').onclick=openTutor;
 document.getElementById('fvBtnFavs').onclick=openFavs;
-$$('[data-open]').forEach(function(b){ b.addEventListener('click',function(){ const fn={tutor:openTutor,sheet:openSheet,study:openStudy,calc:openCalc}[b.dataset.open]; if(fn) fn(); }); });
+$$('[data-open]').forEach(function(b){ b.addEventListener('click',function(){ const fn={tutor:openTutor,sheet:openSheet,calc:openCalc}[b.dataset.open]; if(fn) fn(); }); });
 /* comment: application keyboard shortcuts removed with the command palette */
 FV.onRender(function(){ document.body.setAttribute('data-subject', state.subject); reveal(); });
 updateFavBadge();

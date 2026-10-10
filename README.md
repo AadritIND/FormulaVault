@@ -13,10 +13,9 @@ Built with zero frameworks and zero build step — open the file and it just wor
 - **✦ Vault AI tutor** — a teaching tutor specialised for CBSE/JEE pedagogy: intuition & analogy first, then the formula and *why each symbol is there*, then JEE-Main-vs-Advanced exam patterns, step-by-step worked numericals and classic misconceptions/traps. Uses **your own free API key** (Groq, Google AI Studio or OpenRouter) — keys never leave your browser.
 - **🧾 AI Explanation** — one tap on any formula card for a focused, structured explanation of that single formula.
 - **📄 Revision Sheet builder** — pick any combination of chapters and get a clean, printable revision sheet (Save as PDF / Print). Let **AI top-pick 25** choose the 25 highest-yield formulas for your exam.
-- **🃏 Study mode** — flashcard sessions with flip, "Again / Got it" tracking and mastery over time.
 - **🧮 Smart calculators** — Projectile, Kinematics, Ohm & Power, Ideal Gas, pH & [H⁺], Quadratic roots, Molarity, % Error.
-- **⭐ Bookmarks, 📊 progress & 🔥 streaks** — star the formulas you care about, track day streaks, review stats and mastery in the dashboard.
-- **💰 Data privacy** — everything (bookmarks, study data, settings, API keys) lives in your browser's `localStorage`. No accounts, no servers, no tracking.
+- **⭐ Bookmarks** — star the formulas you care about and jump back to them instantly.
+- **💰 Data privacy** — everything (bookmarks, settings, API keys) lives in your browser's `localStorage`. No accounts, no servers, no tracking.
 - **🌙 Dark / light themes** and **LaTeX math rendering** (MathJax, loaded on demand).
 
 ## Getting started
@@ -50,11 +49,11 @@ formula-vault.html          Single-file build (everything inlined)
 css/
   base.css                  Design tokens, typography, themes
   cards.css                 Card grids & formula cards
-  features.css              Overlays, drawers, tutor, study, sheets, calculators
+  features.css              Overlays, drawers, tutor, sheets, calculators
   layout.css                Layout & responsive rules
 js/
   core.js                   Render engine + fuzzy universal search engine
-  app.js                    Features: AI tutor, explain, sheets, study, stats, calculators
+  app.js                    Features: AI tutor, explain, sheets, calculators
   data/                     18 content files — formulas, derivations & laws (Class 11/12 × Physics/Chemistry/Math)
 ```
 
